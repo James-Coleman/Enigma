@@ -1,0 +1,412 @@
+import Foundation
+
+// MARK: Setup alphabet letter numerical equivalents.
+
+let alphabet = ["A":0, "B":1, "C":2, "D":3, "E":4, "F":5, "G":6, "H":7, "I":8, "J":9, "K":10, "L":11, "M":12, "N":13, "O":14, "P":15, "Q":16, "R":17, "S":18, "T":19, "U":20, "V":21, "W":22, "X":23, "Y":24, "Z":25]
+
+// MARK: Setup rotors and reflector.
+
+let rotorI = (rotor:["A":"E", "B":"K", "C":"M", "D":"F", "E":"L", "F":"G", "G":"D", "H":"Q", "I":"V", "J":"Z", "K":"N", "L":"T", "M":"O", "N":"W", "O":"Y", "P":"H", "Q":"X", "R":"U", "S":"S", "T":"P", "U":"A", "V":"I", "W":"B", "X":"R", "Y":"C", "Z":"J"], step:"R")
+let rotorII = (rotor:["A":"A", "B":"J", "C":"D", "D":"K", "E":"S", "F":"I", "G":"R", "H":"U", "I":"X", "J":"B", "K":"L", "L":"H", "M":"W", "N":"T", "O":"M", "P":"C", "Q":"Q", "R":"G", "S":"Z", "T":"N", "U":"P", "V":"Y", "W":"F", "X":"V", "Y":"O", "Z":"E"], step:"F")
+let rotorIII = (rotor:["A":"B", "B":"D", "C":"F", "D":"H", "E":"J", "F":"L", "G":"C", "H":"P", "I":"R", "J":"T", "K":"X", "L":"V", "M":"Z", "N":"N", "O":"Y", "P":"E", "Q":"I", "R":"W", "S":"G", "T":"A", "U":"K", "V":"M", "W":"U", "X":"S", "Y":"Q", "Z":"O"], step:"W")
+let rotorIV = (rotor:["A":"E", "B":"S", "C":"O", "D":"V", "E":"P", "F":"Z", "G":"J", "H":"A", "I":"Y", "J":"Q", "K":"U", "L":"I", "M":"R", "N":"H", "O":"X", "P":"L", "Q":"N", "R":"F", "S":"T", "T":"G", "U":"K", "V":"D", "W":"C", "X":"M", "Y":"W", "Z":"B"], step:"K")
+let rotorV = (rotor:["A":"V", "B":"Z", "C":"B", "D":"R", "E":"G", "F":"I", "G":"T", "H":"Y", "I":"U", "J":"P", "K":"S", "L":"D", "M":"N", "N":"H", "O":"L", "P":"X", "Q":"A", "R":"W", "S":"M", "T":"J", "U":"Q", "V":"O", "W":"F", "X":"E", "Y":"C", "Z":"K"], step:"A")
+
+let reflectorA = ["A":"E", "B":"J", "C":"M", "D":"Z", "E":"A", "F":"L", "G":"Y", "H":"X", "I":"V", "J":"B", "K":"W", "L":"F", "M":"C", "N":"R", "O":"Q", "P":"U", "Q":"O", "R":"N", "S":"T", "T":"S", "U":"P", "V":"I", "W":"K", "X":"H", "Y":"G", "Z":"D"]
+let reflectorB = ["A":"Y", "B":"R", "C":"U", "D":"H", "E":"Q", "F":"S", "G":"L", "H":"D", "I":"P", "J":"X", "K":"N", "L":"G", "M":"O", "N":"K", "O":"M", "P":"I", "Q":"E", "R":"B", "S":"F", "T":"Z", "U":"C", "V":"W", "W":"V", "X":"J", "Y":"A", "Z":"T"]
+let reflectorC = ["A":"F", "B":"V", "C":"P", "D":"J", "E":"I", "F":"A", "G":"O", "H":"Y", "I":"E", "J":"D", "K":"R", "L":"Z", "M":"X", "N":"W", "O":"G", "P":"C", "Q":"T", "R":"K", "S":"U", "T":"Q", "U":"S", "V":"B", "W":"N", "X":"M", "Y":"H", "Z":"L"]
+
+var plugboard = ["A":"A", "B":"B", "C":"C", "D":"D", "E":"E", "F":"F", "G":"G", "H":"H", "I":"I", "J":"J", "K":"K", "L":"L", "M":"M", "N":"N", "O":"O", "P":"P", "Q":"Q", "R":"R", "S":"S", "T":"T", "U":"U", "V":"V", "W":"W", "X":"X", "Y":"Y", "Z":"Z"]
+
+// MARK: Create default rotors.
+
+var left = rotorI
+var centre = rotorII
+var right = rotorIII
+
+var reflector = reflectorB
+
+// MARK: Create window letters.
+
+var windowLeft = "A"
+var windowCentre = "A"
+var windowRight = "A"
+
+// MARK: Letter offset.
+
+let previousLetter = ["A":"Z", "B":"A", "C":"B", "D":"C", "E":"D", "F":"E", "G":"F", "H":"G", "I":"H", "J":"I", "K":"J", "L":"K", "M":"L", "N":"M", "O":"N", "P":"O", "Q":"P", "R":"Q", "S":"R", "T":"S", "U":"T", "V":"U", "W":"V", "X":"W", "Y":"X", "Z":"Y"]
+
+func letterOffset(inout rotor:[String:String]) {
+    for (key, value) in rotor {
+        rotor[key] = previousLetter[value]
+    }
+}
+
+let nextLetter = ["A":"B", "B":"C", "C":"D", "D":"E", "E":"F", "F":"G", "G":"H", "H":"I", "I":"J", "J":"K", "K":"L", "L":"M", "M":"N", "N":"O", "O":"P", "P":"Q", "Q":"R", "R":"S", "S":"T", "T":"U", "U":"V", "V":"W", "W":"X", "X":"Y", "Y":"Z", "Z":"A"]
+
+func letterOffsetStep(inout rotor:[String:String]) {
+    for (key, value) in rotor {
+        rotor[key] = nextLetter[value]
+    }
+}
+
+// MARK: Rotor 'rotation'.
+
+func advanceRotor(inout rotor:(rotor:[String:String], step:String)) {
+    (rotor.rotor["A"], rotor.rotor["B"], rotor.rotor["C"], rotor.rotor["D"], rotor.rotor["E"], rotor.rotor["F"], rotor.rotor["G"], rotor.rotor["H"], rotor.rotor["I"], rotor.rotor["J"], rotor.rotor["K"], rotor.rotor["L"], rotor.rotor["M"], rotor.rotor["N"], rotor.rotor["O"], rotor.rotor["P"], rotor.rotor["Q"], rotor.rotor["R"], rotor.rotor["S"], rotor.rotor["T"], rotor.rotor["U"], rotor.rotor["V"], rotor.rotor["W"], rotor.rotor["X"], rotor.rotor["Y"], rotor.rotor["Z"]) = (rotor.rotor["B"], rotor.rotor["C"], rotor.rotor["D"], rotor.rotor["E"], rotor.rotor["F"], rotor.rotor["G"], rotor.rotor["H"], rotor.rotor["I"], rotor.rotor["J"], rotor.rotor["K"], rotor.rotor["L"], rotor.rotor["M"], rotor.rotor["N"], rotor.rotor["O"], rotor.rotor["P"], rotor.rotor["Q"], rotor.rotor["R"], rotor.rotor["S"], rotor.rotor["T"], rotor.rotor["U"], rotor.rotor["V"], rotor.rotor["W"], rotor.rotor["X"], rotor.rotor["Y"], rotor.rotor["Z"], rotor.rotor["A"])
+    letterOffset(&rotor.rotor)
+}
+
+func advanceWindow(inout window: String) {
+    window = nextLetter[window]!
+}
+
+func stepRotor(inout rotor:(rotor:[String:String], step:String)) { // This should only need to be the same as advanceRotor, I have no idea why it has to go in the opposite direction, unless the online explanations are also backwards.
+    (rotor.rotor["A"], rotor.rotor["B"], rotor.rotor["C"], rotor.rotor["D"], rotor.rotor["E"], rotor.rotor["F"], rotor.rotor["G"], rotor.rotor["H"], rotor.rotor["I"], rotor.rotor["J"], rotor.rotor["K"], rotor.rotor["L"], rotor.rotor["M"], rotor.rotor["N"], rotor.rotor["O"], rotor.rotor["P"], rotor.rotor["Q"], rotor.rotor["R"], rotor.rotor["S"], rotor.rotor["T"], rotor.rotor["U"], rotor.rotor["V"], rotor.rotor["W"], rotor.rotor["X"], rotor.rotor["Y"], rotor.rotor["Z"]) = (rotor.rotor["Z"], rotor.rotor["A"], rotor.rotor["B"], rotor.rotor["C"], rotor.rotor["D"], rotor.rotor["E"], rotor.rotor["F"], rotor.rotor["G"], rotor.rotor["H"], rotor.rotor["I"], rotor.rotor["J"], rotor.rotor["K"], rotor.rotor["L"], rotor.rotor["M"], rotor.rotor["N"], rotor.rotor["O"], rotor.rotor["P"], rotor.rotor["Q"], rotor.rotor["R"], rotor.rotor["S"], rotor.rotor["T"], rotor.rotor["U"], rotor.rotor["V"], rotor.rotor["W"], rotor.rotor["X"], rotor.rotor["Y"])
+    letterOffsetStep(&rotor.rotor)
+}
+
+// MARK: Initial setup.
+
+func initialSetup(chosenReflector: [String:String] = reflectorB, leftRotor:(rotor:[String:String], step:String) = rotorI, centreRotor:(rotor:[String:String], step:String) = rotorII, rightRotor:(rotor:[String:String], step:String) = rotorIII, ringLeft: NSObject = "A", ringCentre: NSObject = "A", ringRight: NSObject = "A", letterLeft: String = "A", letterCentre: String = "A", letterRight: String = "A") {
+    
+    // Set the local rotors and reflector to chosen values.
+    
+    left = leftRotor
+    centre = centreRotor
+    right = rightRotor
+    reflector = chosenReflector
+    
+    // Set the windows.
+    
+    windowLeft = letterLeft
+    windowCentre = letterCentre
+    windowRight = letterRight
+    
+    // Advance rotor, accounting for starting position letter.
+    
+    if alphabet[letterLeft]! != 0 {
+        for _ in 1...alphabet[letterLeft]! {
+            advanceRotor(&left)
+        }
+    }
+    if alphabet[letterCentre]! != 0 {
+        for _ in 1...alphabet[letterCentre]! {
+            advanceRotor(&centre)
+        }
+    }
+    if alphabet[letterRight]! != 0 {
+        for _ in 1...alphabet[letterRight]! {
+            advanceRotor(&right)
+        }
+    }
+    
+    // Reverse rotor, accounting for ring setting.
+    
+    if ringLeft is String {
+        if alphabet[ringLeft as! String] != 0 {
+            for _ in 1...alphabet[ringLeft as! String]! {
+                stepRotor(&left)
+            }
+        }
+    } else if ringLeft is Int {
+        if ringLeft as! Int != 1 {
+            for _ in 1...(ringLeft as! Int)-1 {
+                stepRotor(&left)
+            }
+        }
+    }
+    
+    if ringCentre is String {
+        if alphabet[ringCentre as! String] != 0 {
+            for _ in 1...alphabet[ringCentre as! String]! {
+                stepRotor(&centre)
+            }
+        }
+    } else if ringCentre is Int {
+        if ringCentre as! Int != 1 {
+            for _ in 1...(ringCentre as! Int)-1 {
+                stepRotor(&centre)
+            }
+        }
+    }
+    
+    if ringRight is String {
+        if alphabet[ringRight as! String] != 0 {
+            for _ in 1...alphabet[ringRight as! String]! {
+                stepRotor(&right)
+            }
+        }
+    } else if ringRight is Int {
+        if ringRight as! Int != 1 {
+            for _ in 1...(ringRight as! Int)-1 {
+                stepRotor(&right)
+            }
+        }
+    }
+}
+
+// MARK: Update letters if necessary
+
+func resetLetters(letterLeft: String, letterCentre: String, letterRight: String) {
+    
+    // Calculate the new offset
+    
+    var advanceLeft = alphabet[letterLeft]! - alphabet[windowLeft]!
+    var advanceCentre = alphabet[letterCentre]! - alphabet[windowCentre]!
+    var advanceRight = alphabet[letterRight]! - alphabet[windowRight]!
+    
+    while advanceLeft < 0 {
+        advanceLeft += 26
+    }
+    while advanceCentre < 0 {
+        advanceCentre += 26
+    }
+    while advanceRight < 0 {
+        advanceRight += 26
+    }
+    
+    if advanceLeft != 0 {
+        for _ in 1...advanceLeft {
+            advanceRotor(&left)
+        }
+    }
+    if advanceCentre != 0 {
+        for _ in 1...advanceCentre {
+            advanceRotor(&centre)
+        }
+    }
+    if advanceRight != 0 {
+        for _ in 1...advanceRight {
+            advanceRotor(&right)
+        }
+    }
+    
+    // Set the windows.
+    
+    windowLeft = letterLeft
+    windowCentre = letterCentre
+    windowRight = letterRight
+}
+
+// MARK: Initialise plugboard
+
+func initialPlugboard(custom:[String:String]? = nil) {
+    plugboard = ["A":"A", "B":"B", "C":"C", "D":"D", "E":"E", "F":"F", "G":"G", "H":"H", "I":"I", "J":"J", "K":"K", "L":"L", "M":"M", "N":"N", "O":"O", "P":"P", "Q":"Q", "R":"R", "S":"S", "T":"T", "U":"U", "V":"V", "W":"W", "X":"X", "Y":"Y", "Z":"Z"]
+    if let custom = custom {
+        for (customKey, customValue) in custom {
+            plugboard[customKey] = customValue
+            for (plugKey, _) in plugboard {
+                if plugKey == customValue {
+                    plugboard[plugKey] = customKey
+                }
+            }
+        }
+    }
+}
+
+// MARK: Plugboard encoding
+
+func plugboard(letter: String) -> String {
+    return plugboard[letter]!
+}
+
+// MARK: First rotor encoding.
+
+func rightRotor(letter: String) -> String {
+    return right.rotor[letter]!
+}
+
+// MARK: Second rotor encoding.
+
+func centreRotor(letter: String) -> String {
+    return centre.rotor[letter]!
+}
+
+// MARK: Third rotor encoding.
+
+func leftRotor(letter: String) -> String {
+    return left.rotor[letter]!
+}
+
+// MARK: Reflector.
+
+func reflector(letter: String) -> String {
+    return reflector[letter]!
+}
+
+// MARK: Reversed third rotor.
+
+func reversedLeftRotor(letter: String) -> String {
+    var i = ""
+    for (key, value) in left.rotor {
+        if letter == value {
+            i = key
+            break
+        }
+    }
+    return i
+}
+
+// MARK: Reversed second rotor.
+
+func reversedCentreRotor(letter: String) -> String {
+    var i = ""
+    for (key, value) in centre.rotor {
+        if letter == value {
+            i = key
+            break
+        }
+    }
+    return i
+}
+
+// MARK: Reversed first rotor.
+
+func reversedRightRotor(letter: String) -> String {
+    var i = ""
+    for (key, value) in right.rotor {
+        if letter == value {
+            i = key
+            break
+        }
+    }
+    return i
+}
+
+// MARK: Manual encode test.
+
+plugboard("G")
+rightRotor("G")
+centreRotor("C")
+leftRotor("D")
+reflector("F")
+reversedLeftRotor("S")
+reversedCentreRotor("S")
+reversedRightRotor("E")
+plugboard("P")
+
+// MARK: Manual decode test.
+
+plugboard("P")
+rightRotor("P")
+centreRotor("E")
+leftRotor("S")
+reflector("S")
+reversedLeftRotor("F")
+reversedCentreRotor("D")
+reversedRightRotor("C")
+plugboard("G")
+
+// MARK: Automatic encode.
+
+plugboard(reversedRightRotor(reversedCentreRotor(reversedLeftRotor(reflector(leftRotor(centreRotor(rightRotor(plugboard("G")))))))))
+
+// MARK: Automatic decode.
+
+plugboard(reversedRightRotor(reversedCentreRotor(reversedLeftRotor(reflector(leftRotor(centreRotor(rightRotor(plugboard("P")))))))))
+
+// MARK: Automatically code string.
+
+var doubleStep = false
+
+func code(letter:Character) -> String {
+    advanceRotor(&right)
+    advanceWindow(&windowRight)
+    if doubleStep {
+        advanceRotor(&centre)
+        advanceWindow(&windowCentre)
+        advanceRotor(&left)
+        advanceWindow(&windowLeft)
+        doubleStep = false
+    }
+    if windowRight == right.step {
+        advanceRotor(&centre)
+        advanceWindow(&windowCentre)
+    }
+    if windowCentre == previousLetter[centre.step] {
+        doubleStep = true
+    }
+//    print(windowLeft, windowCentre, windowRight)
+    return plugboard(reversedRightRotor(reversedCentreRotor(reversedLeftRotor(reflector(leftRotor(centreRotor(rightRotor(plugboard("\(letter)")))))))))
+}
+
+initialSetup(letterRight: "Z")
+code("G") // Should be "P"
+
+initialSetup(letterRight: "Z")
+code("P") // Should be "G"
+
+// MARK: Return entire string.
+
+func codeString(message: String) -> String {
+    var string = ""
+    for letter in message.uppercaseString.characters {
+        if letter == " " {
+            string.write(" ")
+        } else {
+            string.write(code(letter))
+        }
+    }
+    return string
+}
+
+// MARK:- Tests
+
+/*
+initialSetup()
+codeString("AAAAA") // Should be "BDZGO"
+
+initialSetup(letterLeft: "A", letterCentre: "A", letterRight: "A", ringLeft: "A", ringCentre: "A", ringRight: "A")
+codeString("opgn dx c rwom") // Should be "THIS IS A TEST"
+
+codeString("opgn dx c rwom")
+initialSetup(letterLeft: "A", letterCentre: "A", letterRight: "A", ringLeft: 0, ringCentre: 0, ringRight: 0)
+codeString("opgn dx c rwom") // Should be "THIS IS A TEST"
+
+initialSetup(ringLeft: "B", ringCentre: "B", ringRight: "B")
+codeString("AAAAA") // Should be "EWTYX"
+
+initialSetup(ringLeft: 1, ringCentre: 1, ringRight: 1)
+codeString("AAAAA") // Should be "EWTYX"
+
+initialSetup()
+codeString("thism essag eisde finit elylo ngert hantw entys ixcha racte rs") // Should be "OPGNH NVFLY NXJFS RYSDS YBGBR GTKHJ QGHGI ZJWVW DILNU BTEOV AL"
+
+initialSetup(ringLeft: 1, ringCentre: 1, ringRight: 1)
+codeString("thism essag eisde finit elylo ngert hantw entys ixcha racte rs")
+
+initialSetup(letterLeft: "J", letterCentre: "L", letterRight: "C")
+codeString("ihave madea nenig mamac hinei nswif t")
+
+initialSetup(ringLeft: 1, ringCentre: 1, ringRight: 1)
+codeString("ihave madea nenig mamac hinei nswif t")
+
+initialSetup(letterLeft: "B", letterCentre: "B", letterRight: "B", ringLeft: 1, ringCentre: 1, ringRight: 1)
+codeString("ihave madea nenig mamac hinei nswif t")
+
+initialSetup(letterLeft: "J", letterCentre: "L", letterRight: "C", ringLeft: "D", ringCentre: "F", ringRight: "J")
+codeString("ihave madea nenig mamac hinei nswif t") // Should be "GJVPG XISRN GCLCY IDGVY XBYLQ EAXJC E"
+
+initialSetup(reflectorB, leftRotor: rotorII, centreRotor: rotorI, rightRotor: rotorV, letterLeft: "F", letterCentre: "R", letterRight: "A", ringLeft: "A", ringCentre: "A", ringRight: "A")
+initialPlugboard(["A":"B", "I":"R", "U":"X", "K":"P"])
+codeString("PCDAO NONEB CJBOG LYMEE YGSHR YUBUJ HMJOQ ZLEX") // Should be "ANBUL MEGRA ZGOES TINGS TRENG GEHEI MEMEL DUNG"
+*/
+initialSetup(reflectorA, leftRotor: rotorII, centreRotor: rotorI, rightRotor: rotorIII, letterLeft: "A", letterCentre: "B", letterRight: "L", ringLeft: 24, ringCentre: 13, ringRight: 22) // From wiki.franklinheath.co.uk/index.php/Enigma/Sample_Messages
+initialPlugboard(["A":"M", "F":"I", "N":"V", "P":"S", "T":"U", "W":"Z"])
+codeString("GCDSE AHUGW TQGRK VLFGX UCALX VYMIG MMNMF DXTGN VHVRM MEVOU YFZSL RHDRR XFJWC FHUHM UNZEF RDISI KBGPM YVXUZ") // Should be "FEIND LIQEI NFANT ERIEK OLONN EBEOB AQTET XANFA NGSUE DAUSG ANGBA ERWAL DEXEN DEDRE IKMOS TWAER TSNEU STADT"
+/*
+initialSetup(leftRotor: rotorIV, centreRotor: rotorII, rightRotor: rotorV, letterLeft: "D", letterCentre: "H", letterRight: "O", ringLeft: "G", ringCentre: "M", ringRight: "Y") // Example from CodesAndCiphers.org.uk/enigma/enigma3.htm
+initialPlugboard(["D":"N", "G":"R", "I":"S", "K":"C", "Q":"X", "T":"M", "P":"V", "H":"Y", "F":"W", "B":"J"])
+codeString("GXS")
+resetLetters("R", letterCentre: "L", letterRight: "P")
+codeString("NQVLT YQFSE WWGJZ GQHVS EIXIM YKCNW IEBMB ATPPZ TDVCU PKAY")
+
+initialSetup(reflectorB, leftRotor: rotorI, centreRotor: rotorIII, rightRotor: rotorII, letterLeft: "I", letterCentre: "S", letterRight: "L", ringLeft: "B", ringCentre: "R", ringRight: "E") // From matematiksider.dk/enigma_eng.html
+initialPlugboard(["A":"R", "D":"Q", "L":"P", "M":"F", "E":"S", "K":"T", "Y":"Z", "H":"W", "C":"O", "U":"G"])
+codeString("AWB")
+resetLetters("E", letterCentre: "T", letterRight: "G")
+codeString("JMB OPGFGX WEJLIK XF ADYN GXB JFJEJNEXEZY OVX NVHAXBX BAJVIXWRO") // Should be "WIR WERDEN MORGEN UM DREI UHR NACHMITTAGS DIE TRUPPEN ANGREIFEN".
+*/
+
+
